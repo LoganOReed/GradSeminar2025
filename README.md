@@ -2,6 +2,8 @@
 
 `LaTeX` template that I use for beamer presentations.
 
+Using [this template](https://github.com/hamaluik/Beamer-Theme-Execushares)
+
 ## Flakes
 
 There is no need to use `flakes`, this template can be used with any working

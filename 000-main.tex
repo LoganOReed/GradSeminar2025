@@ -5,15 +5,32 @@
 \documentclass{beamer}
 
 \usepackage{blindtext}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{import}
+\usepackage{pdfpages}
+\usepackage{transparent}
+\usepackage{xcolor}
+
+
+
+% \pdfsuppresswarningpagegroup=1
+
+
 
 \usetheme[nopixelitem]{Execushares}
 
-\title{A New Beamer Theme That Works Well and Looks Great: Execushares}
-\subtitle{A custom modern minimalist Beamer theme designed from scratch}
-\author{Kenton Hamaluik}
-\date{June 1, 2014}
+\title{Krylov Subspace Methods}
+\subtitle{Using Projection Methods to Approximate Inverses}
+\author{Logan Reed}
+\date{October 3, 2025}
 
 \setcounter{showSlideNumbers}{1}
+
+\newcommand{\incfig}[2][1]{%
+    \def\svgwidth{#1\columnwidth}
+    \import{./figures/}{#2.pdf_tex}
+}
 
 \begin{document}
 	\setcounter{showProgressBar}{0}
@@ -22,11 +39,13 @@
 	\frame{\titlepage}
 
 	\begin{frame}
-		\frametitle{Contents}
-		\begin{enumerate}
-			\item Introduction \\ \textcolor{ExecusharesGrey}{\footnotesize\hspace{1em} The reasoning and background behind this theme}
-			\item Lorem Text  \\ \textcolor{ExecusharesGrey}{\footnotesize\hspace{1em} Just some Lorem Ipsum for filler}
-			\item Conclusions \\ \textcolor{ExecusharesGrey}{\footnotesize\hspace{1em} Some closing thoughts}
+		\frametitle{Contents} \begin{enumerate}
+			\item Introduction \\ \textcolor{ExecusharesGrey}{\footnotesize\hspace{1em} Problems to solve and the two major methods}
+			\item Projection Methods  \\ \textcolor{ExecusharesGrey}{\footnotesize\hspace{1em} A canonical way of explaining iterative methods}
+			\item Krylov Subspace Methods \\ \textcolor{ExecusharesGrey}{\footnotesize\hspace{1em} CG, GMRES, and connection to minimal polynomials}
+			\item Implementation Details \\ \textcolor{ExecusharesGrey}{\footnotesize\hspace{1em} Preconditioning, restarting, and picking the right basis}
+			\item Numerical Results \\ \textcolor{ExecusharesGrey}{\footnotesize\hspace{1em} Comparing different methods and augmentations}
+			\item Conclusion \\ \textcolor{ExecusharesGrey}{\footnotesize\hspace{1em} How to choose which method to use}
 		\end{enumerate}
 	\end{frame}
 
@@ -34,8 +53,105 @@
 	\setcounter{showProgressBar}{1}
 	\setcounter{showSlideNumbers}{1}
 	\section{Introduction}
+    \begin{frame}
+			\frametitle{The Problem}
+      We wish to solve large invertible systems of linear equations of the form
+      \[
+      Ax = b
+      .\] 
+      The difficulty is determined by
+      \begin{itemize}
+        \item Size. Current problems have $\text{dim}\left( A \right) > 10000$
+        \item Sparsity. The structure of zero entries can be used to improve computation time
+        \item Condition. $\kappa \left( A \right) = \left\| A \right\| \left\| A^{-1} \right\| > > 1$ will reduce convergence rate.
+      \end{itemize}
+    \end{frame}
+
+    \begin{frame}
+      \frametitle{Direct Methods}
+      Direct Methods give the exact solution to $Ax = b$ in a finite number of steps in the absence of roundoff error.
+      They are all variations of Gaussian elimination.
+       \begin{itemize}
+         \item Pros
+           \begin{itemize}
+             \item Guaranteed solution in a fixed amount of time
+             \item Stability is known a priori
+             \item Works for a Matrix without known properties
+           \end{itemize}
+         \item Cons
+           \begin{itemize}
+             \item Roundoff Error cause compounding accuracy and stability issues
+             \item Sparse matrices are treated the same as dense matrices
+             \item The entire matrix must be stored in memory
+           \end{itemize}
+      \end{itemize}
+    \end{frame}
+
+    \begin{frame}
+      \frametitle{Iterative Methods}
+      Iterative Methods use successive approximations to obtain more accurate solutions at each step.
+      \begin{itemize}
+        \item Pros
+          \begin{itemize}
+            \item Leverages properties of the matrix
+            \item Doesn't need to store $A$ directly, stores matvecs.
+            \item Especially effective when $A$ is sparse, e.g. from solving PDEs.
+          \end{itemize}
+        \item Cons
+          \begin{itemize}
+            \item No guarantee of convergence in a given number of steps
+            \item Not competitive with Direct Methods for dense $A$
+            \item Knowledge of  $A$ is needed for competitive runtime
+          \end{itemize}
+      \end{itemize}
+    \end{frame}
+
+    \begin{frame}
+      \frametitle{Projection Methods}
+      Projection Methods are Iterative Methods which find, at each time step, an approximate solution to a problem from a subspace.
+
+      \begin{itemize}
+        \item Initial Problem: $Ax = b$
+          \begin{itemize}
+            \item $A \in \mathbb{R}^{n \times n}$
+          \end{itemize}
+        \item Projected Problem: $b-A \widetilde{x} \perp \mathcal{L}$
+          \begin{itemize}
+            \item $\mathcal{K},\mathcal{L} \in \mathbb{R}^{m \times m}$ where $m < < n$
+            \item $\widetilde{x} \in \mathcal{K}$
+          \end{itemize}
+      \end{itemize}
+      $m$ degrees of freedom ($\mathcal{K}$) and $m$ constraints ($\mathcal{L}$) gives an $n \times n$ system.
+    \end{frame}
+
+    \begin{frame}
+      \frametitle{Projection Examples}
+      Steepest Descent: 
+      \begin{itemize}
+        \item $A$ symmetric positive definite (spd)
+        \item $\mathcal{K} = \text{span}(r)$ 
+        \item $\mathcal{L} = \mathcal{K}$
+      \end{itemize}
+\begin{algorithm}[H]
+\begin{algorithmic}
+\For{$i=1,\ldots$}
+\State $r \gets b - A x$ 
+\State $\alpha \gets \frac{\left( r,r \right)}{\left( Ar,r \right)}$ \Comment{Step Size}
+\State $x \gets x + \alpha r$
+\EndFor
+\end{algorithmic}
+\caption{One Dimensional Steepest Descent}
+\end{algorithm}
+Each step minimizes $\left\| x - x^{*} \right\|_{A}^{2}$ in direction $-\nabla f$.
+    \end{frame}
+
+\begin{frame}
+% TODO: Type name and press <C-f> to open inkscape
+  % NOTE: You also need to start it with space a rn.
+\end{frame}
+
 		\begin{frame}
-			\frametitle{Why Beamer?}
+			\frametitle{The Problem}
 			\begin{enumerate}
 				\item LaTeX is great!
 				\item Beamer is easy to use!
