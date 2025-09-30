@@ -106,6 +106,8 @@
       \end{itemize}
     \end{frame}
 
+    \section{Projection Methods}
+
     \begin{frame}
       \frametitle{Projection Methods}
       Projection Methods are Iterative Methods which find, at each time step, an approximate solution to a problem from a subspace.
@@ -125,30 +127,80 @@
     \end{frame}
 
     \begin{frame}
-      \frametitle{Projection Examples}
-      Steepest Descent: 
+      \frametitle{Two Important Cases}
+      \begin{itemize}
+        \item Orthogonal Projection (OP)
+          \begin{itemize}
+            \item $\mathcal{L}=\mathcal{K}$ 
+            \item When $A$ is spd,  $\left\| x^{*} - \widetilde{x} \right\|_{A} = \min_{z\in\mathcal{K}} \left\| x^{*} - z \right\|_{A}$
+          \end{itemize}
+        \item Minimum Residual (MR)
+          \begin{itemize}
+            \item $\mathcal{L} = A \mathcal{K}$ 
+            \item $\left\| b - A \widetilde{x} \right\|_{2} = \min_{z \in \mathcal{K}}\left\| b - Az \right\|_{2}$
+          \end{itemize}
+      \end{itemize}
+    \end{frame}
+
+    \begin{frame}
+      \frametitle{Steepest Descent}
+      An example of an OP method is One Dimensional Steepest Descent: 
       \begin{itemize}
         \item $A$ symmetric positive definite (spd)
         \item $\mathcal{K} = \text{span}(r)$ 
         \item $\mathcal{L} = \mathcal{K}$
       \end{itemize}
-\begin{algorithm}[H]
-\begin{algorithmic}
-\For{$i=1,\ldots$}
-\State $r \gets b - A x$ 
-\State $\alpha \gets \frac{\left( r,r \right)}{\left( Ar,r \right)}$ \Comment{Step Size}
-\State $x \gets x + \alpha r$
-\EndFor
-\end{algorithmic}
-\caption{One Dimensional Steepest Descent}
-\end{algorithm}
-Each step minimizes $\left\| x - x^{*} \right\|_{A}^{2}$ in direction $-\nabla f$.
+      \begin{algorithm}[H]
+        \begin{algorithmic}
+          \For{$i=1,\ldots$}
+          \State $r \gets b - A x$ 
+          \State $\alpha \gets \frac{\left( r,r \right)}{\left( Ar,r \right)}$ \Comment{Step Size}
+          \State $x \gets x + \alpha r$
+          \EndFor
+        \end{algorithmic}
+        \caption{One Dimensional Steepest Descent}
+      \end{algorithm}
+      Each step minimizes $\left\| x - x^{*} \right\|_{A}^{2}$ in direction $-\nabla f$.
     \end{frame}
 
-\begin{frame}
-% TODO: Type name and press <C-f> to open inkscape
-  % NOTE: You also need to start it with space a rn.
-\end{frame}
+    \begin{frame}
+      \frametitle{Steepest Descent Polynomial}
+      Explicitly writing the iteration $k$, we have
+      \[
+      x_{k+1} = x_{k} + \alpha_{k}r_{k}
+      .\] 
+      Plugging this in,
+      \[
+      r_{k+1} = b - A\left( x_{k} + \alpha_{k}r_{k} \right) = \left( I - \alpha_{k}A \right)r_{k}
+      .\] 
+      Using this for $r_{k},\ldots,r_{1}$ gives us
+      \[
+      r_{k+1} = \left( I - \alpha_{k}A \right)\left( I - \alpha_{k-1}A \right)\ldots \left( I - \alpha_{0} \right)r_{0} = q_{k+1}\left( A \right)r_{0}
+      \] 
+      where $q_{k+1} \in P_{k+1}$.
+
+
+    \end{frame}
+
+    \begin{frame}
+      \frametitle{Improvements}
+      Thus iteration of the method can be understood as constructing a polynomial $q_{k+1} \in P_{k+1}$ such that
+      \[
+      r_{k+1} = \left( I - \alpha_{k}A \right)\left( I - \alpha_{k-1}A \right)\ldots \left( I - \alpha_{0} \right)r_{0} = q_{k+1}\left( A \right)r_{0}
+      .\] 
+      \begin{itemize}
+        \item Can we find an ``optimal'' polynomial $p_{k+1} \in P_{k+1}$?
+      \end{itemize}
+    \end{frame}
+
+    \section{Krylov Subspaces}
+    \begin{frame}
+      \frametitle{Minimum Polynomials}
+      \begin{itemize}
+        \item Every matrix $A$ has a minimum polynomial, the polynomial of smallest degree such that $p\left( A \right) = 0$
+        \item By Cayley-Hamilton Theorem, $\text{deg}\left( p \right) \leq n$
+      \end{itemize}
+    \end{frame}
 
 		\begin{frame}
 			\frametitle{The Problem}
